@@ -1,0 +1,104 @@
+{
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "title": "Total RAG Queries",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "rag_pipeline_calls_total", "refId": "A" }]
+    },
+    {
+      "title": "Total RAG Errors",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "rag_errors_total", "refId": "A" }]
+    },
+    {
+      "title": "Avg RAG Latency (s)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "rate(rag_latency_seconds_sum[5m]) / rate(rag_latency_seconds_count[5m])", "refId": "A" }]
+    },
+    {
+      "title": "Total HTTP Requests",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "sum(http_requests_total)", "refId": "A" }]
+    },
+
+    {
+      "title": "Answer Relevance",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 12 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 1 } },
+      "targets": [{ "expr": "rag_answer_relevance", "refId": "A" }]
+    },
+    {
+      "title": "Faithfulness",
+      "type": "gauge",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 12 },
+      "fieldConfig": { "defaults": { "min": 0, "max": 1 } },
+      "targets": [{ "expr": "rag_faithfulness", "refId": "A" }]
+    },
+    {
+      "title": "HTTP Requests by Method",
+      "type": "timeseries",
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "sum(rate(http_requests_total[1m])) by (method)", "legendFormat": "{{ method }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Python Process CPU",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 0, "y": 18 },
+      "targets": [
+        { "expr": "rate(process_cpu_seconds_total[1m])", "legendFormat": "CPU", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Python Process Memory",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 12, "x": 12, "y": 18 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "expr": "process_resident_memory_bytes", "legendFormat": "Resident", "refId": "A" },
+        { "expr": "process_virtual_memory_bytes", "legendFormat": "Virtual", "refId": "B" }
+      ]
+    },
+    {
+      "title": "Container CPU (cAdvisor)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 25 },
+      "targets": [
+        { "expr": "rate(container_cpu_usage_seconds_total{name=~\"cliniq.*\"}[1m])", "legendFormat": "{{ name }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Container Memory (cAdvisor)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 25 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "expr": "container_memory_usage_bytes{name=~\"cliniq.*\"}", "legendFormat": "{{ name }}", "refId": "A" }
+      ]
+    },
+    {
+      "title": "Container Network I/O (cAdvisor)",
+      "type": "timeseries",
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 25 },
+      "fieldConfig": { "defaults": { "unit": "Bps" } },
+      "targets": [
+        { "expr": "rate(container_network_receive_bytes_total{name=~\"cliniq.*\"}[1m])", "legendFormat": "{{ name }} rx", "refId": "A" },
+        { "expr": "rate(container_network_transmit_bytes_total{name=~\"cliniq.*\"}[1m])", "legendFormat": "{{ name }} tx", "refId": "B" }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "schemaVersion": 42,
+  "time": { "from": "now-6h", "to": "now" },
+  "title": "CliniQ – Assistant décisionnel clinique",
+  "uid": "adph7nm",
+  "version": 5
+}
