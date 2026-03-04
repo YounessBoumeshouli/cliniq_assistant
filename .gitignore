@@ -1,0 +1,32 @@
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# MLflow
+mlruns/
+mlflow.db
+
+# ChromaDB
+**/chroma_db/
+
+# Database files
+*.db
+*.sqlite3
+
+# PDF and binary data
+*.pdf
+
+# Build / dist
+*.egg-info/
+dist/
+build/
