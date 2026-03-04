@@ -1,0 +1,101 @@
+services:
+
+  backend:
+    build: ./backend
+    container_name: cliniq_backend
+    ports:
+      - "8009:8000"
+    env_file:
+      - .env
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - postgres
+      - mlflow
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: cliniq_frontend
+    ports:
+      - "8509:8501"
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+
+  postgres:
+    image: postgres:15
+    container_name: cliniq_postgres
+    environment:
+      POSTGRES_DB: cliniq
+      POSTGRES_USER: cliniq_user
+      POSTGRES_PASSWORD: cliniq_pass
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  mlflow:
+    build: ./mlflow
+    container_name: cliniq_mlflow
+    ports:
+      - "5009:5000"
+    volumes:
+      - mlflow_data:/mlflow
+
+  prometheus:
+    image: prom/prometheus
+    container_name: cliniq_prometheus
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml
+    ports:
+      - "9099:9090"
+    depends_on:
+      - backend
+
+  grafana:
+    image: grafana/grafana
+    container_name: cliniq_grafana
+    ports:
+      - "3009:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+    depends_on:
+      - prometheus
+
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cliniq_cadvisor
+    restart: always
+    privileged: true
+    ports:
+      - "8081:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    depends_on:
+      - backend
+      - postgres
+      - mlflow
+
+volumes:
+  postgres_data:
+  mlflow_data:
+  grafana_data:
