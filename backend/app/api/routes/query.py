@@ -1,3 +1,4 @@
+import logging
 import time
 
 from app.core.database import get_db
@@ -16,23 +17,41 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
 router = APIRouter(prefix="/query", tags=["Query"])
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO)
 
 
 @router.post("/assistant")
 def query_root(query: QueryCreate, current_user: dict = Depends(get_current_user), db: Session = Depends(get_db)):
+    logger.info(f"🚀 API Request received from user {current_user['id']}: {query.query_text[:50]}...")
+    request_start = time.time()
+    
     try:
         from app.main import rag_errors, rag_latency, rag_pipeline_calls
 
         rag_pipeline_calls.inc()
         start = time.time()
+        
+        logger.info("🤖 Calling generate function...")
         ai_response = generate(query.query_text, evaluate=True)
-        rag_latency.observe(time.time() - start)
+        generation_time = time.time() - start
+        
+        rag_latency.observe(generation_time)
+        logger.info(f"✅ Generation completed in {generation_time:.2f}s")
+        
+        logger.info("💾 Saving to database...")
+        db_start = time.time()
         saved = create_query(db, query.query_text, ai_response, current_user["id"])
+        db_time = time.time() - db_start
+        logger.info(f"✅ Saved to DB in {db_time:.2f}s")
+        
+        total_time = time.time() - request_start
+        logger.info(f"🎉 Total API request time: {total_time:.2f}s")
 
         return {"question": query.query_text, "answer": ai_response, "db_id": saved.id}
     except Exception as e:
         from app.main import rag_errors
-
+        logger.error(f"❌ Error in query_root: {str(e)}")
         rag_errors.inc()
         raise AppException(str(e))
 
